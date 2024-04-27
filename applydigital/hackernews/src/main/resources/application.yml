@@ -1,0 +1,57 @@
+server:
+  port: 8080
+  compression:
+    enabled: true # Whether response compression is enabled.
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json # Comma-separated list of MIME types that should be compressed.
+    min-response-size: 1024 # Minimum "Content-Length" value that is required for compression to be performed.
+  undertow:
+    threads:
+      worker: 64 # Generally this should be reasonably high, at least 10 per CPU core: https://undertow.io/undertow-docs/undertow-docs-2.1.0/index.html#listeners-2
+      io: 4 # One IO thread per CPU core is a reasonable default: https://undertow.io/undertow-docs/undertow-docs-2.1.0/index.html#listeners-2
+
+springdoc:
+  swagger-ui:
+    path: /api/docs
+
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hackernews
+    username: postgres
+    password: postgres
+    hikari:
+      auto-commit: false
+      connection-timeout: 250 # It is a configuration in milliseconds. The ideal is to keep it low so that it times out quickly and doesn't lock the threads.
+      max-lifetime: 600000 # Maximum time that a connection can stay open (10 minutes) - security.
+      maximum-pool-size: 20 # We keep up to a maximum of 20 connections with the database. The ideal is to keep it low, as it is costly for the database to manage. https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
+      minimum-idle: 10
+      pool-name: master
+  jpa:
+    database: POSTGRESQL
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      "[hibernate.dialect]": org.hibernate.dialect.PostgreSQLDialect
+      "[hibernate.generate_statistics]": false
+      "[hibernate.connection.provider_disables_autocommit]": true
+      # To maximize performance, we disable auto-commit and open-in-view.
+      # https://vladmihalcea.com/why-you-should-always-use-hibernate-connection-provider_disables_autocommit-for-resource-local-jpa-transactions/
+  servlet:
+    multipart:
+      max-file-size: 10GB # Max file size.
+      max-request-size: 100GB # Max request size.
+
+#Production
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:5432/hackernews
+  jpa:
+    show-sql: false

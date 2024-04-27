@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  applydigital-postgres:
+    image: postgres:16.2-alpine
+    container_name: applydigital-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hackernews
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - hackernewsnetwork
+
+  sbootapp:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    container_name: applydigital-hackernews
+    restart: on-failure
+    depends_on:
+      - applydigital-postgres
+    ports:
+      - '8080:8080'
+    networks:
+      - hackernewsnetwork
+    environment:
+      - 'POSTGRES_HOST=applydigital-postgres'
+
+
+networks:
+  hackernewsnetwork:
+    driver: bridge
